@@ -1,0 +1,129 @@
+-- Retrieve the data tables
+SELECT * FROM kick
+SELECT * FROM kickstarter
+
+-- state per category and main_category
+Select state, 
+	   count(state) AS count_state, 
+	   category, 
+	   main_category
+FROM kickstarter
+GROUP BY state, category, main_category
+ORDER BY count_state DESC;
+
+-- Number of project per category from kick
+CREATE TABLE kick_percategory AS (
+			SELECT COUNT(name) as projectbycategory, 
+			main_category
+FROM kick
+GROUP BY  main_category
+ORDER BY projectbycategory Desc)
+
+-- Number of project per category from kickstarter
+CREATE TABLE kickstarter_percategory AS(
+			SELECT COUNT(name) as projectbycategory, 
+			main_category
+FROM kickstarter
+GROUP BY  main_category  
+ORDER BY projectbycategory Desc)
+
+-- How many projects per category
+SELECT main_category, 
+	 count(name) AS count_per_category
+FROM (
+    SELECT name, main_category FROM kick
+    UNION ALL
+    SELECT name, main_category FROM kickstarter
+) AS subquery
+GROUP BY main_category
+ORDER BY count_per_category Desc
+LIMIT 10;
+
+-- average Days from the launched to the dealine
+SELECT main_category, 
+	   AVG(DATE_PART('day', deadline::timestamp - launched::timestamp)) AS avg_time
+FROM kickstarter
+GROUP BY main_category
+ORDER BY avg_time ASC ;
+
+-- The average goal per category
+SELECT main_category, 
+	   AVG(goal) AS average_goal
+FROM (
+    SELECT goal, main_category FROM kick
+    UNION ALL
+    SELECT goal, main_category FROM kickstarter
+) AS subquery
+WHERE goal IS NOT NULL
+GROUP BY main_category
+ORDER BY average_goal Desc
+LIMIT 10;
+
+-- average of pledged
+SELECT main_category, 
+	   AVG(pledged) AS average_pledged
+FROM (
+    SELECT pledged, main_category FROM kick
+    UNION ALL
+    SELECT pledged, main_category FROM kickstarter
+) AS subquery
+WHERE pledged IS NOT NULL
+GROUP BY main_category
+ORDER BY average_pledged Desc
+LIMIT 10;
+
+-- percentage of projects that met their goal by main_category
+SELECT state,
+	   main_category,
+	   count(state) AS count_state, 
+	   ROUND(100 * count(state) / sum(count(state)) over (), 2 ) AS percent_success_per_category
+From kickstarter
+WHERE state  = 'successful'
+GROUP by state, main_category
+ORDER BY percent_success_per_category DESC;
+
+-- success and failed per category FROM kickstarter table
+SELECT  state, 
+		COUNT(state) AS state_count, 
+		main_category
+FROM kickstarter
+where state IN ('successful', 'failed', 'undefined')
+GROUP BY main_category, state
+ORDER BY state_count ASC;
+
+-- success and failed per category FROM kick table
+SELECT  state, 
+		COUNT(state) AS state_count, 
+		main_category
+FROM kick
+where state IN ('live', 'suspended', 'canceled')
+GROUP BY main_category, state
+ORDER BY state_count ASC;
+
+-- success and failed baesd on country from kickstarter
+SELECT  state, 
+		COUNT(state) AS state_count, 
+		country
+FROM kickstarter
+where state IN ('failed', 'successful')
+GROUP BY country, state
+ORDER BY state_count ASC;
+
+-- state based on number of backers per country that name starting by u
+SELECT state, 
+	backers, 
+	country, 
+	category,
+	main_category
+FROM kickstarter
+WHERE state  = 'successful' and  country LIKE 'U%'
+
+-- COUNT state
+SELECT  state, 
+		count(state) AS count_state
+FROM kickstarter
+GROUP by state
+
+
+
+
